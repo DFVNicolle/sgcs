@@ -1,0 +1,105 @@
+# Render Blueprint para SGCS
+# Este archivo configura automáticamente tu aplicación en Render.com
+
+services:
+  # Aplicación Web Laravel
+  - type: web
+    name: sgcs-app
+    env: docker
+    plan: free  # Cambia a 'starter' o superior para producción
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    
+    # Variables de entorno
+    envVars:
+      - key: APP_NAME
+        value: SGCS
+      
+      - key: APP_ENV
+        value: production
+      
+      - key: APP_DEBUG
+        value: false
+      
+      - key: APP_KEY
+        generateValue: true  # Render generará automáticamente
+      
+      - key: APP_URL
+        sync: false  # Configurar manualmente con tu URL de Render
+      
+      - key: LOG_CHANNEL
+        value: stack
+      
+      - key: LOG_LEVEL
+        value: info
+      
+      # Base de datos (PostgreSQL de Render)
+      - key: DB_CONNECTION
+        value: pgsql
+      
+      - key: DB_HOST
+        fromDatabase:
+          name: sgcs-db
+          property: host
+      
+      - key: DB_PORT
+        fromDatabase:
+          name: sgcs-db
+          property: port
+      
+      - key: DB_DATABASE
+        fromDatabase:
+          name: sgcs-db
+          property: database
+      
+      - key: DB_USERNAME
+        fromDatabase:
+          name: sgcs-db
+          property: user
+      
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sgcs-db
+          property: password
+      
+      # Queue
+      - key: QUEUE_CONNECTION
+        value: database
+      
+      # Cache y Session
+      - key: CACHE_DRIVER
+        value: file
+      
+      - key: SESSION_DRIVER
+        value: database
+      
+      - key: SESSION_LIFETIME
+        value: 120
+      
+      # Seguridad
+      - key: SESSION_SECURE_COOKIE
+        value: true
+      
+      # Migraciones automáticas
+      - key: RUN_MIGRATIONS
+        value: true
+      
+      # Seeders (cambiar a true solo la primera vez)
+      - key: RUN_SEEDERS
+        value: false
+    
+    # Disco persistente para storage
+    disk:
+      name: sgcs-storage
+      mountPath: /var/www/html/storage
+      sizeGB: 1
+    
+    # Health check
+    healthCheckPath: /
+
+# Base de datos PostgreSQL
+databases:
+  - name: sgcs-db
+    plan: free  # Cambia a 'starter' o superior para producción
+    databaseName: sgcs
+    user: sgcs_user

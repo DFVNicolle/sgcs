@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Aplicación Laravel SGCS
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sgcs-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_NAME=SGCS
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:8080
+      - LOG_CHANNEL=stack
+      - LOG_LEVEL=info
+      
+      # Base de datos MySQL
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=sgcs
+      - DB_USERNAME=sgcs_user
+      - DB_PASSWORD=sgcs_password
+      
+      # Queue
+      - QUEUE_CONNECTION=database
+      
+      # Cache
+      - CACHE_DRIVER=file
+      - SESSION_DRIVER=file
+      
+      # Migraciones y Seeders
+      - RUN_MIGRATIONS=true
+      - RUN_SEEDERS=false
+    depends_on:
+      - db
+    networks:
+      - sgcs-network
+    volumes:
+      - storage:/var/www/html/storage
+      - logs:/var/www/html/storage/logs
+
+  # Base de datos MySQL
+  db:
+    image: mysql:8.0
+    container_name: sgcs-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=sgcs
+      - MYSQL_USER=sgcs_user
+      - MYSQL_PASSWORD=sgcs_password
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_ALLOW_EMPTY_PASSWORD=no
+    ports:
+      - "3306:3306"
+    networks:
+      - sgcs-network
+    volumes:
+      - dbdata:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  # phpMyAdmin (opcional para desarrollo)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: sgcs-phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_USER=sgcs_user
+      - PMA_PASSWORD=sgcs_password
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - sgcs-network
+
+networks:
+  sgcs-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
+  storage:
+    driver: local
+  logs:
+    driver: local
